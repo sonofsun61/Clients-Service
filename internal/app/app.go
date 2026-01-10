@@ -3,6 +3,7 @@ package app
 import (
 	"log"
 	"net/http"
+	"github.com/AI-Hackathon-2026/Clients-Service/internal/transport"
 )
 
 type App struct {
@@ -20,7 +21,7 @@ func (a *App) Run() error {
 
     server := &http.Server{
         Addr: a.Addr,
-        Handler: router,
+        Handler: transport.LogRequest(router),
     }
 
     log.Printf("Server started on port %s", a.Addr)
