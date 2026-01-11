@@ -8,7 +8,7 @@ import (
 
 type service interface {
     findProfile(username string) (*model.GetUserProfilePayload, error)
-    updateProfile(*model.UpdateUserProfilePayload) error
+    editProfile(*model.UpdateUserProfilePayload) error
     findGraphs( string) ([]model.GraphPayload, error)
 }
 
@@ -45,7 +45,7 @@ func (h *Handler) putProfile(w http.ResponseWriter, r *http.Request) {
         raiseError(w, "putProfile, ParseJson error:", err)
         return
     }
-    if err := h.srv.updateProfile(prfl); err != nil {
+    if err := h.srv.editProfile(prfl); err != nil {
         raiseError(w, "putProfile, updateProfile error:", err)
         return
     }
