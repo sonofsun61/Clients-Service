@@ -12,3 +12,7 @@ type UpdateUserProfilePayload struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+type GraphPayload struct {
+    GraphId int64 `json:"graph_id"`
+}

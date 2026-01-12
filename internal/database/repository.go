@@ -39,20 +39,20 @@ func (r *repository) EditProfile(prfl *model.UpdateUserProfilePayload) error {
     return err
 }
 
-func (r *repository) SelectGraphsByUsername(username string) ([]string, error) {
+func (r *repository) SelectGraphsByUsername(username string) ([]model.GraphPayload, error) {
     r.mocker.MockGetGraphs()
 
-    var graphsId []string
+    var graphs []model.GraphPayload
     rows, err := r.db.Query("SELECT graph_id FROM client c JOIN client_graph on c.id=client_id WHERE username=$1", username)
     if err != nil {
         return nil, err
     }
     for rows.Next() {
-        var id string
-        if err := rows.Scan(&id); err != nil {
+        var graph model.GraphPayload
+        if err := rows.Scan(&graph.GraphId); err != nil {
             return nil, err
         }
-        graphsId = append(graphsId, id)
+        graphs = append(graphs, graph)
     }
-    return graphsId, nil
+    return graphs, nil
 }

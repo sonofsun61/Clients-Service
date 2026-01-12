@@ -26,6 +26,6 @@ func (m *Mocker) MockEditProfile() {
 }
 
 func (m *Mocker) MockGetGraphs() {
-	graphRows := m.mck.NewRows([]string{"id"}).AddRow("1").AddRow("2")
+	graphRows := m.mck.NewRows([]string{"id"}).AddRow(1).AddRow(2)
 	m.mck.ExpectQuery("SELECT graph_id FROM client c JOIN client_graph on c.id=client_id WHERE username=\\$1").WithArgs("johndoe").WillReturnRows(graphRows)
 }

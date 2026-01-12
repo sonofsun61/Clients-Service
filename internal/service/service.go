@@ -5,9 +5,9 @@ import (
 )
 
 type repository interface {
-    selectProfileByUsername(username string) (*model.GetUserProfilePayload, error)
-    editProfile(prf *model.UpdateUserProfilePayload) error
-    selectGraphsByUsername(username string) ([]string, error)
+    SelectProfileByUsername(username string) (*model.GetUserProfilePayload, error)
+    EditProfile(*model.UpdateUserProfilePayload) error
+    SelectGraphsByUsername(username string) ([]model.GraphPayload, error)
 }
 
 type service struct {
@@ -20,14 +20,14 @@ func NewService(rep repository) *service {
     }
 }
 
-func (s *service) findProfile(username string) (*model.GetUserProfilePayload, error) {
-    return s.rep.selectProfileByUsername(username)
+func (s *service) FindProfile(username string) (*model.GetUserProfilePayload, error) {
+    return s.rep.SelectProfileByUsername(username)
 }
 
-func (s *service) updateProfile(prf *model.UpdateUserProfilePayload) error {
-    return s.rep.editProfile(prf)
+func (s *service) UpdateProfile(prf *model.UpdateUserProfilePayload) error {
+    return s.rep.EditProfile(prf)
 }
 
-func (s *service) findGraphs(username string) ([]string, error) {
-    return s.rep.selectGraphsByUsername(username) 
+func (s *service) FindGraphs(username string) ([]model.GraphPayload, error) {
+    return s.rep.SelectGraphsByUsername(username) 
 }
