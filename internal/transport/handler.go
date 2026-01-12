@@ -8,8 +8,8 @@ import (
 
 type service interface {
     findProfile(username string) (*model.GetUserProfilePayload, error)
-    editProfile(*model.UpdateUserProfilePayload) error
-    findGraphs( string) ([]model.GraphPayload, error)
+    editProfile(prf *model.UpdateUserProfilePayload) error
+    findGraphs(username string) ([]string, error)
 }
 
 type Handler struct {
