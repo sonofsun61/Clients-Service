@@ -14,5 +14,5 @@ func main() {
     }
 
     apl := app.NewApp(":9191", db, mock)
-    log.Println(apl.Run())
+    apl.Run()
 }
