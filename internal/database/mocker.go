@@ -19,13 +19,13 @@ func (m *Mocker) MockGetProfile() {
 
 func (m *Mocker) MockEditProfile() {
 	m.mck.ExpectExec(
-        "UPDATE client SET username=\\$1, password=\\$2, email=\\$3 WHERE username=\\$4",
-    ).WithArgs(
-        "johndoe1", "1234", "johndoe1@mail.com", "johndoe",
-    ).WillReturnResult(sqlmock.NewResult(1,1))
+		"UPDATE client SET username=\\$1, password=\\$2, email=\\$3 WHERE username=\\$4",
+	).WithArgs(
+		"johndoe1", "1234", "johndoe1@mail.com", "johndoe",
+	).WillReturnResult(sqlmock.NewResult(1, 1))
 }
 
 func (m *Mocker) MockGetGraphs() {
-	graphRows := m.mck.NewRows([]string{"id"}).AddRow(1).AddRow(2)
+	graphRows := m.mck.NewRows([]string{"id"}).AddRow("69b2da835143117d128a56eb")
 	m.mck.ExpectQuery("SELECT graph_id FROM client c JOIN client_graph on c.id=client_id WHERE username=\\$1").WithArgs("johndoe").WillReturnRows(graphRows)
 }

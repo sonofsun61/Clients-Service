@@ -8,11 +8,11 @@ type GetUserProfilePayload struct {
 
 type UpdateUserProfilePayload struct {
 	UsernameNew string `json:"username_new"`
-    UsernameOld string `json:"username_old"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	UsernameOld string `json:"username_old"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
 }
 
 type GraphPayload struct {
-    GraphId int64 `json:"graph_id"`
+	GraphId string `json:"graph_id"`
 }
