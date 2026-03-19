@@ -18,59 +18,61 @@ import (
 )
 
 const (
-    shutdownTimeout = 10
+	shutdownTimeout = 10
 )
 
 type App struct {
-    Addr string
-    db *sql.DB
-    mock sqlmock.Sqlmock
+	Addr string
+	db   *sql.DB
+	mock sqlmock.Sqlmock
 }
 
 func NewApp(adr string, db *sql.DB, mock sqlmock.Sqlmock) *App {
-    return &App{
-        Addr: adr,
-        db: db,
-        mock: mock,
-    }
+	return &App{
+		Addr: adr,
+		db:   db,
+		mock: mock,
+	}
 }
 
 func (a *App) Run() {
-    router := http.NewServeMux()
+	router := http.NewServeMux()
 
-    mocker := database.NewMocker(a.mock)
-    repository := database.NewRepository(a.db, mocker)
-    service := service.NewService(repository)
-    handler := transport.NewHandler(service)
+	mocker := database.NewMocker(a.mock)
+	profileRepository := database.NewProfileRepository(a.db, mocker)
+	authRepository := database.NewAuthRepository(a.db, mocker)
+	profileService := service.NewProfileService(profileRepository)
+	authService := service.NewAuthService(authRepository)
+	handler := transport.NewHandler(profileService, authService)
 
-    handler.RegisterRoutes(router)
+	handler.RegisterRoutes(router)
 
-    server := &http.Server{
-        Addr: a.Addr,
-        Handler: transport.LogRequest(router),
-    }
+	server := &http.Server{
+		Addr:    a.Addr,
+		Handler: transport.LogRequest(router),
+	}
 
-    go func() {
-        log.Printf("Server started on port %s", a.Addr)
-        err := server.ListenAndServe()
-        if err != nil  && !errors.Is(err, http.ErrServerClosed) {
-            log.Println("Error during server starting:", err)
-        }
-    }()
+	go func() {
+		log.Printf("Server started on port %s", a.Addr)
+		err := server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Println("Error during server starting:", err)
+		}
+	}()
 
-    quit := make(chan os.Signal, 1)
-    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-    <-quit
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 
-    log.Println("Server is shutting down...")
+	log.Println("Server is shutting down...")
 
-    ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
 
-    err := server.Shutdown(ctx)
-    if err != nil {
-        log.Printf("Error during server shutting down %v.\n", err)
-    }
+	err := server.Shutdown(ctx)
+	if err != nil {
+		log.Printf("Error during server shutting down %v.\n", err)
+	}
 
-    log.Println("Server was shut down")
+	log.Println("Server was shut down")
 }
