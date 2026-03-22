@@ -1,5 +1,11 @@
 package model
 
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
 type GetUserProfilePayload struct {
 	Id       string `json:"id"`
 	Username string `json:"username"`
@@ -24,15 +30,24 @@ type RegisterRequest struct {
 }
 
 type LoginRequest struct {
-	Login    string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type TokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-type AuthResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+type UserData struct {
+	UserID       uuid.UUID `json:"user_id"`
+	Username     string    `json:"username"`
+	Email        string    `json:"email"`
+	PasswordHash string
+	StreakStart  time.Time `json:"streak_start"`
+	LastActivity time.Time `json:"last_activity"`
 }

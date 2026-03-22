@@ -1,4 +1,4 @@
-package database
+package repository
 
 import (
 	"database/sql"
@@ -6,19 +6,19 @@ import (
 	"github.com/AI-Hackathon-2026/Clients-Service/internal/model"
 )
 
-type ProfileRepository struct {
+type profileRepository struct {
 	db     *sql.DB
 	mocker *Mocker
 }
 
-func NewProfileRepository(db *sql.DB, mocker *Mocker) *ProfileRepository {
-	return &ProfileRepository{
+func NewProfileRepository(db *sql.DB, mocker *Mocker) *profileRepository {
+	return &profileRepository{
 		db:     db,
 		mocker: mocker,
 	}
 }
 
-func (r *ProfileRepository) SelectProfileByUsername(username string) (*model.GetUserProfilePayload, error) {
+func (r *profileRepository) SelectProfileByUsername(username string) (*model.GetUserProfilePayload, error) {
 	r.mocker.MockGetProfile()
 
 	profile := new(model.GetUserProfilePayload)
@@ -29,7 +29,7 @@ func (r *ProfileRepository) SelectProfileByUsername(username string) (*model.Get
 	return profile, nil
 }
 
-func (r *ProfileRepository) EditProfile(prfl *model.UpdateUserProfilePayload) error {
+func (r *profileRepository) EditProfile(prfl *model.UpdateUserProfilePayload) error {
 	r.mocker.MockEditProfile()
 
 	_, err := r.db.Exec(
@@ -39,7 +39,7 @@ func (r *ProfileRepository) EditProfile(prfl *model.UpdateUserProfilePayload) er
 	return err
 }
 
-func (r *ProfileRepository) SelectGraphsByUsername(username string) ([]model.GraphPayload, error) {
+func (r *profileRepository) SelectGraphsByUsername(username string) ([]model.GraphPayload, error) {
 	r.mocker.MockGetGraphs()
 
 	var graphs []model.GraphPayload

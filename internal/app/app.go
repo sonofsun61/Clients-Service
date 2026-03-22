@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,7 +12,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 
-	"github.com/AI-Hackathon-2026/Clients-Service/internal/database"
+	"github.com/AI-Hackathon-2026/Clients-Service/internal/repository"
 	"github.com/AI-Hackathon-2026/Clients-Service/internal/service"
 	"github.com/AI-Hackathon-2026/Clients-Service/internal/transport"
 )
@@ -36,27 +36,40 @@ func NewApp(adr string, db *sql.DB, mock sqlmock.Sqlmock) *App {
 }
 
 func (a *App) Run() {
-	router := http.NewServeMux()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	secret := os.Getenv("JWT_SECRET")
 
-	mocker := database.NewMocker(a.mock)
-	profileRepository := database.NewProfileRepository(a.db, mocker)
-	authRepository := database.NewAuthRepository(a.db, mocker)
-	profileService := service.NewProfileService(profileRepository)
-	authService := service.NewAuthService(authRepository)
-	handler := transport.NewHandler(profileService, authService)
+	mocker := repository.NewMocker(a.mock)
+	profileRepo := repository.NewProfileRepository(a.db, mocker)
+	authRepo := repository.NewAuthRepository(a.db, mocker)
 
-	handler.RegisterRoutes(router)
+	profileService := service.NewProfileService(profileRepo) // можно добавить логгер
+	authService := service.NewAuthService(authRepo, logger, secret)
+
+	mainRouter := http.NewServeMux()
+
+	h := transport.NewHandler(profileService, authService, logger)
+
+	h.RegisterPublicRoutes(mainRouter)
+
+	protectedMux := http.NewServeMux()
+	h.RegisterProtectedRoutes(protectedMux)
+
+	mainRouter.Handle("/", transport.AuthMiddleware(protectedMux))
+
+	finalHandler := transport.LogRequest(logger, mainRouter)
 
 	server := &http.Server{
-		Addr:    a.Addr,
-		Handler: transport.LogRequest(router),
+		Addr:     a.Addr,
+		Handler:  finalHandler,
+		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
 	go func() {
-		log.Printf("Server started on port %s", a.Addr)
-		err := server.ListenAndServe()
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Println("Error during server starting:", err)
+		logger.Info("Server started", slog.String("addr", a.Addr))
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("Server startup failed", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -64,15 +77,14 @@ func (a *App) Run() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Server is shutting down...")
+	logger.Info("Server is shutting down...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
-	err := server.Shutdown(ctx)
-	if err != nil {
-		log.Printf("Error during server shutting down %v.\n", err)
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Error("Graceful shutdown failed", "error", err)
 	}
 
-	log.Println("Server was shut down")
+	logger.Info("Server stopped")
 }
