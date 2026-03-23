@@ -55,7 +55,7 @@ func (a *App) Run() {
 	protectedMux := http.NewServeMux()
 	h.RegisterProtectedRoutes(protectedMux)
 
-	mainRouter.Handle("/", transport.AuthMiddleware(protectedMux))
+	mainRouter.Handle("/", transport.AuthMiddleware(protectedMux, secret))
 
 	finalHandler := transport.LogRequest(logger, mainRouter)
 
