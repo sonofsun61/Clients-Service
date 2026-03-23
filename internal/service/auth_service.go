@@ -91,6 +91,7 @@ func (s *authService) Refresh(ctx context.Context, refreshToken string) (model.T
 	}, nil
 }
 
+// TODO: add token validation + logout functionality
 func (s *authService) Logout(ctx context.Context, refreshToken string) error {
 	return nil
 }

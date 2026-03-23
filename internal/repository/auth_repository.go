@@ -32,7 +32,7 @@ func (r *authRepository) Register(ctx context.Context, userData model.UserData) 
 	}
 	query := `
 		INSERT INTO users (user_id, username, password_hash, streak_start, last_activity)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		VALUES ($1, $2, $3, $4, $5)
 	`
 	_, err := r.db.ExecContext(ctx, query, userData.UserID, userData.Username, userData.PasswordHash, time.Now(), time.Now())
 	if err != nil {

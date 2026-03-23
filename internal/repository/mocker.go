@@ -38,7 +38,7 @@ func (m *Mocker) MockGetGraphs() {
 
 func (m *Mocker) MockRegister(req model.UserData) error {
 	m.mck.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "user" (username, email, streak_start, last_activity) VALUES ($1, $2, $3, $4) RETURNING id`)).
-		WithArgs(req.Username, req.Email, time.Now(), time.Now(), time.Now()).
+		WithArgs(req.Username, req.Email, time.Now(), time.Now()).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(req.UserID))
 
 	m.mck.ExpectExec(regexp.QuoteMeta(`INSERT INTO auth (user_id, password) VALUES ($1, $2)`)).
@@ -47,6 +47,7 @@ func (m *Mocker) MockRegister(req model.UserData) error {
 	return nil
 }
 
+// TODO: change mock method to work correctly
 func (m *Mocker) MockLogin(reqEmail string) (model.UserData, error) {
 	return model.UserData{}, nil
 }
