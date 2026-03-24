@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -10,8 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/DATA-DOG/go-sqlmock"
-
+	"github.com/AI-Hackathon-2026/Clients-Service/internal/config"
 	"github.com/AI-Hackathon-2026/Clients-Service/internal/repository"
 	"github.com/AI-Hackathon-2026/Clients-Service/internal/service"
 	"github.com/AI-Hackathon-2026/Clients-Service/internal/transport"
@@ -22,25 +20,21 @@ const (
 )
 
 type App struct {
-	Addr string
-	db   *sql.DB
-	mock sqlmock.Sqlmock
+	cfg *config.Config
 }
 
-func NewApp(adr string, db *sql.DB, mock sqlmock.Sqlmock) *App {
+func NewApp(cfg *config.Config) *App {
 	return &App{
-		Addr: adr,
-		db:   db,
-		mock: mock,
+		cfg: cfg,
 	}
 }
 
 func (a *App) Run() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	mocker := repository.NewMocker(a.mock)
-	profileRepo := repository.NewProfileRepository(a.db, mocker)
-	authRepo := repository.NewAuthRepository(a.db, mocker)
+	mocker := repository.NewMocker(a.cfg.Mocker)
+	profileRepo := repository.NewProfileRepository(a.cfg.DB, mocker)
+	authRepo := repository.NewAuthRepository(a.cfg.DB, mocker)
 
 	profileService := service.NewProfileService(profileRepo) // можно добавить логгер
 	authService := service.NewAuthService(authRepo, logger)
@@ -59,13 +53,13 @@ func (a *App) Run() {
 	finalHandler := transport.LogRequest(logger, mainRouter)
 
 	server := &http.Server{
-		Addr:     a.Addr,
+		Addr:     a.cfg.Port,
 		Handler:  finalHandler,
 		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
 	go func() {
-		logger.Info("Server started", slog.String("addr", a.Addr))
+		logger.Info("Server started", slog.String("addr", a.cfg.Port))
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Error("Server startup failed", "error", err)
 			os.Exit(1)
