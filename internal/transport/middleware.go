@@ -44,7 +44,7 @@ func LogRequest(logger *slog.Logger, next http.Handler) http.Handler {
 	})
 }
 
-func AuthMiddleware(next http.Handler, secret string) http.Handler {
+func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -58,7 +58,7 @@ func AuthMiddleware(next http.Handler, secret string) http.Handler {
 			return
 		}
 
-		claims, err := jwtutil.ValidateToken(parts[1], secret)
+		claims, err := jwtutil.ValidateToken(parts[1])
 		if err != nil {
 			http.Error(w, "Unauthorized: "+err.Error(), http.StatusUnauthorized)
 			return

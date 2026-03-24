@@ -3,6 +3,7 @@ package jwtutil
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -14,7 +15,9 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
-func ValidateToken(tokenStr string, secret string) (*UserClaims, error) {
+var secret = os.Getenv("JWT_SECRET")
+
+func ValidateToken(tokenStr string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -30,7 +33,7 @@ func ValidateToken(tokenStr string, secret string) (*UserClaims, error) {
 	return nil, errors.New("invalid token claims")
 }
 
-func GenerateToken(userID uuid.UUID, secret string, duration time.Duration) (string, error) {
+func GenerateToken(userID uuid.UUID, duration time.Duration) (string, error) {
 	claims := UserClaims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{

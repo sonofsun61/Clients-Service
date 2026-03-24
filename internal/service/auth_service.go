@@ -22,16 +22,14 @@ type AuthService interface {
 }
 
 type authService struct {
-	repo      repository.AuthRepository
-	logger    *slog.Logger
-	jwtSecret string
+	repo   repository.AuthRepository
+	logger *slog.Logger
 }
 
-func NewAuthService(repo repository.AuthRepository, logger *slog.Logger, jwtSecret string) AuthService {
+func NewAuthService(repo repository.AuthRepository, logger *slog.Logger) AuthService {
 	return &authService{
-		repo:      repo,
-		logger:    logger,
-		jwtSecret: jwtSecret,
+		repo:   repo,
+		logger: logger,
 	}
 }
 
@@ -66,12 +64,12 @@ func (s *authService) Login(ctx context.Context, req model.LoginRequest) (model.
 		s.logger.Warn("login failed: wrong password", "email", req.Email)
 		return model.TokenResponse{}, errors.New("invalid email or password")
 	}
-	accessToken, err := jwtutil.GenerateToken(userData.UserID, s.jwtSecret, 15*time.Minute)
+	accessToken, err := jwtutil.GenerateToken(userData.UserID, 15*time.Minute)
 	if err != nil {
 		s.logger.Error("failed to generate access token", "error", err)
 		return model.TokenResponse{}, errors.New("internal server error")
 	}
-	refreshToken, err := jwtutil.GenerateToken(userData.UserID, s.jwtSecret, 30*24*time.Hour)
+	refreshToken, err := jwtutil.GenerateToken(userData.UserID, 30*24*time.Hour)
 	return model.TokenResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -79,12 +77,12 @@ func (s *authService) Login(ctx context.Context, req model.LoginRequest) (model.
 }
 
 func (s *authService) Refresh(ctx context.Context, refreshToken string) (model.TokenResponse, error) {
-	claims, err := jwtutil.ValidateToken(refreshToken, s.jwtSecret)
+	claims, err := jwtutil.ValidateToken(refreshToken)
 	if err != nil {
 		return model.TokenResponse{}, errors.New("invalid refresh token")
 	}
-	newAccess, _ := jwtutil.GenerateToken(claims.UserID, s.jwtSecret, 15*time.Minute)
-	newRefresh, _ := jwtutil.GenerateToken(claims.UserID, s.jwtSecret, 30*24*time.Hour)
+	newAccess, _ := jwtutil.GenerateToken(claims.UserID, 15*time.Minute)
+	newRefresh, _ := jwtutil.GenerateToken(claims.UserID, 30*24*time.Hour)
 	return model.TokenResponse{
 		AccessToken:  newAccess,
 		RefreshToken: newRefresh,

@@ -37,14 +37,13 @@ func NewApp(adr string, db *sql.DB, mock sqlmock.Sqlmock) *App {
 
 func (a *App) Run() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	secret := os.Getenv("JWT_SECRET")
 
 	mocker := repository.NewMocker(a.mock)
 	profileRepo := repository.NewProfileRepository(a.db, mocker)
 	authRepo := repository.NewAuthRepository(a.db, mocker)
 
 	profileService := service.NewProfileService(profileRepo) // можно добавить логгер
-	authService := service.NewAuthService(authRepo, logger, secret)
+	authService := service.NewAuthService(authRepo, logger)
 
 	mainRouter := http.NewServeMux()
 
@@ -55,7 +54,7 @@ func (a *App) Run() {
 	protectedMux := http.NewServeMux()
 	h.RegisterProtectedRoutes(protectedMux)
 
-	mainRouter.Handle("/", transport.AuthMiddleware(protectedMux, secret))
+	mainRouter.Handle("/", transport.AuthMiddleware(protectedMux))
 
 	finalHandler := transport.LogRequest(logger, mainRouter)
 
