@@ -17,9 +17,9 @@ type Config struct {
 }
 
 func Load() *Config {
-	err := godotenv.Load("configs/.env")
+	err := godotenv.Load("../../configs/.env")
 	if err != nil {
-		log.Println("No .env file found in configs/, using system environment variables")
+		log.Println(err)
 	}
 	db, mocker, err := sqlmock.New()
 	if err != nil {
