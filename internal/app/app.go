@@ -53,7 +53,7 @@ func (a *App) Run() {
 	finalHandler := transport.LogRequest(logger, mainRouter)
 
 	server := &http.Server{
-		Addr:     a.cfg.Port,
+		Addr:     ":" + a.cfg.Port,
 		Handler:  finalHandler,
 		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
