@@ -7,7 +7,7 @@ import (
 )
 
 type GetUserProfilePayload struct {
-	Id       string `json:"id"`
+	UserID   string `json:"user_id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 }
@@ -50,4 +50,37 @@ type UserData struct {
 	PasswordHash string
 	StreakStart  time.Time `json:"streak_start"`
 	LastActivity time.Time `json:"last_activity"`
+}
+
+type GetStreakRequest struct {
+	UserID string `json:"user_id"`
+}
+
+type GetStreakResponse struct {
+	StreakDays    int  `json:"streak_days"`
+	IsActiveToday bool `json:"isActiveToday"`
+}
+
+type UpdateStreakRequest struct {
+	StreakCount      int
+	LastActivityDate time.Time
+	StreakUpdatedAt  time.Time
+}
+
+type RegisterActivityRequest struct {
+	UserID    string `json:"user_id"`
+	SessionID string `json:"session_id"`
+	Timestamp time.Time
+}
+
+type RegisterActivityResponse struct {
+	StreakDays    int
+	IsActiveToday bool
+}
+
+type StreakUpdatedEvent struct {
+	UserID    string `json:"user_id"`
+	SessionID string `json:"session_id"`
+	Streak    int    `json:"streak"`
+	Message   string `json:"message"`
 }
