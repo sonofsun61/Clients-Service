@@ -58,7 +58,7 @@ type GetStreakRequest struct {
 
 type GetStreakResponse struct {
 	StreakDays    int  `json:"streak_days"`
-	IsActiveToday bool `json:"isActiveToday"`
+	IsActiveToday bool `json:"is_active_today"`
 }
 
 type UpdateStreakRequest struct {
@@ -74,8 +74,14 @@ type RegisterActivityRequest struct {
 }
 
 type RegisterActivityResponse struct {
-	StreakDays    int
-	IsActiveToday bool
+	StreakDays    int  `json:"streak_days"`
+	IsActiveToday bool `json:"is_active_today"`
+}
+
+type StreakState struct {
+	StreakCount      int
+	LastActivityDate *time.Time
+	StreakUpdatedAt  time.Time
 }
 
 type StreakUpdatedEvent struct {
