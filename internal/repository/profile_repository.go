@@ -6,6 +6,12 @@ import (
 	"github.com/AI-Hackathon-2026/Clients-Service/internal/model"
 )
 
+type ProfileRepository interface {
+	SelectProfileByUsername(username string) (*model.GetUserProfilePayload, error)
+	EditProfile(*model.UpdateUserProfilePayload) error
+	SelectGraphsByUsername(username string) ([]model.GraphPayload, error)
+}
+
 type profileRepository struct {
 	db     *sql.DB
 	mocker *Mocker
@@ -23,7 +29,7 @@ func (r *profileRepository) SelectProfileByUsername(username string) (*model.Get
 
 	profile := new(model.GetUserProfilePayload)
 	row := r.db.QueryRow("SELECT * FROM client WHERE username=$1", username)
-	if err := row.Scan(&profile.Id, &profile.Username, &profile.Email); err != nil {
+	if err := row.Scan(&profile.UserID, &profile.Username, &profile.Email); err != nil {
 		return nil, err
 	}
 	return profile, nil
