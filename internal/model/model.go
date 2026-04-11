@@ -81,7 +81,6 @@ type RegisterActivityResponse struct {
 type StreakState struct {
 	StreakCount      int
 	LastActivityDate *time.Time
-	StreakUpdatedAt  time.Time
 }
 
 type StreakUpdatedEvent struct {
