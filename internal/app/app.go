@@ -34,10 +34,10 @@ func NewApp(cfg *config.Config) *App {
 func (a *App) Run() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	mocker := repository.NewMocker(a.cfg.Mocker)
-	profileRepo := repository.NewProfileRepository(a.cfg.DB, mocker)
-	authRepo := repository.NewAuthRepository(a.cfg.DB, mocker)
-	streakRepo := repository.NewStreakRepository(a.cfg.DB)
+	db := repository.NewFakeDB()
+	profileRepo := repository.NewProfileRepository(db)
+	authRepo := repository.NewAuthRepository(db)
+	streakRepo := repository.NewStreakRepository(db)
 
 	streakService := service.NewStreakService(streakRepo, logger)
 	profileService := service.NewProfileService(profileRepo, streakService)
