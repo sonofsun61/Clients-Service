@@ -32,7 +32,6 @@ func (h *Handler) RegisterPublicRoutes(mux *http.ServeMux) {
 
 func (h *Handler) RegisterProtectedRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /auth/logout", h.postLogout)
-
 	mux.HandleFunc("GET /profile-edit/{username}", h.getProfile)
 	mux.HandleFunc("GET /get-streak", h.getStreak)
 	mux.HandleFunc("PUT /profile-edit/", h.putProfile)
@@ -83,11 +82,12 @@ func (h *Handler) postRegister(w http.ResponseWriter, r *http.Request) {
 		raiseError(w, "postRegister, ParseJson error: ", err)
 		return
 	}
-	if err := h.authService.Register(r.Context(), *req); err != nil {
+	tokens, err := h.authService.Register(r.Context(), *req); 
+    if err != nil {
 		raiseError(w, "postRegister, authService.Register error: ", err)
 		return
 	}
-	WriteJson(w, http.StatusCreated, req)
+	WriteJson(w, http.StatusCreated, tokens)
 }
 
 func (h *Handler) postLogin(w http.ResponseWriter, r *http.Request) {
