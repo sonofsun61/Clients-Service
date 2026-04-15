@@ -13,6 +13,7 @@ type ProfileService interface {
 	FindGraphs(username string) ([]model.GraphPayload, error)
 	GetStreak(ctx context.Context, req model.GetStreakRequest) (*model.GetStreakResponse, error)
 	RegisterActivity(ctx context.Context, req model.RegisterActivityRequest) (*model.RegisterActivityResponse, error)
+	AddGraph(username, graphId string) error
 }
 
 type profileService struct {
@@ -53,4 +54,9 @@ func (s *profileService) RegisterActivity(ctx context.Context, req model.Registe
 		return nil, err
 	}
 	return &resp, nil
+}
+
+func (s *profileService) AddGraph(username, graphId string) error {
+	graph := model.GraphPayload{GraphId: graphId}
+	return s.profileRep.InsertGraph(username, graph)
 }

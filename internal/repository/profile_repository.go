@@ -8,6 +8,7 @@ type ProfileRepository interface {
 	SelectProfileByUsername(username string) (*model.GetUserProfilePayload, error)
 	EditProfile(*model.UpdateUserProfilePayload) error
 	SelectGraphsByUsername(username string) ([]model.GraphPayload, error)
+	InsertGraph(username string, graphId model.GraphPayload) error
 }
 
 type profileRepository struct {
@@ -30,4 +31,8 @@ func (r *profileRepository) EditProfile(prfl *model.UpdateUserProfilePayload) er
 
 func (r *profileRepository) SelectGraphsByUsername(username string) ([]model.GraphPayload, error) {
 	return r.db.GetGraphsByUsername(username)
+}
+
+func (r *profileRepository) InsertGraph(username string, graphId model.GraphPayload) error {
+	return r.db.AddGraphToUser(username, graphId)
 }
