@@ -14,4 +14,3 @@ COPY --from=builder /app/myapp .
 EXPOSE 9191
 
 CMD ["./myapp"]
-
