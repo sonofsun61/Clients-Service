@@ -89,3 +89,8 @@ type StreakUpdatedEvent struct {
 	Streak    int    `json:"streak"`
 	Message   string `json:"message"`
 }
+
+type UserGraph struct {
+	Username string `json:"username"`
+	GraphId  string `json:"graph_id"`
+}

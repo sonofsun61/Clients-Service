@@ -109,12 +109,17 @@ func (db *FakeDB) GetGraphsByUsername(username string) ([]model.GraphPayload, er
 	return graphs, nil
 }
 
-func (db *FakeDB) AddGraphToUser(userID string, graph model.GraphPayload) error {
-	if _, exists := db.users[userID]; !exists {
+func (db *FakeDB) AddGraphToUser(username string, graph model.GraphPayload) error {
+	user, err := db.GetUserByUsername(username)
+	if err != nil {
+		return err
+	}
+	userId := user.UserID.String()
+	if _, exists := db.users[userId]; !exists {
 		return errors.New("user not found")
 	}
 
-	db.userGraphs[userID] = append(db.userGraphs[userID], graph)
+	db.userGraphs[userId] = append(db.userGraphs[userId], graph)
 	return nil
 }
 

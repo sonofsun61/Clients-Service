@@ -37,6 +37,7 @@ func (h *Handler) RegisterProtectedRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /profile-edit/", h.putProfile)
 
 	mux.HandleFunc("GET /graphs/{username}", h.getGraphs)
+	mux.HandleFunc("POST /graphs", h.addGraph)
 }
 
 func (h *Handler) getProfile(w http.ResponseWriter, r *http.Request) {
@@ -82,8 +83,8 @@ func (h *Handler) postRegister(w http.ResponseWriter, r *http.Request) {
 		raiseError(w, "postRegister, ParseJson error: ", err)
 		return
 	}
-	tokens, err := h.authService.Register(r.Context(), *req); 
-    if err != nil {
+	tokens, err := h.authService.Register(r.Context(), *req)
+	if err != nil {
 		raiseError(w, "postRegister, authService.Register error: ", err)
 		return
 	}
@@ -166,5 +167,15 @@ func (h *Handler) registerActivityForRequest(r *http.Request) {
 	})
 	if err != nil {
 		h.logger.Warn("failed to register streak activity", "user_id", userID, "error", err)
+	}
+}
+
+func (h *Handler) addGraph(w http.ResponseWriter, r *http.Request) {
+	userGraph := new(model.UserGraph)
+	ParseJson(r, userGraph)
+	err := h.profileService.AddGraph(userGraph.Username, userGraph.GraphId)
+	if err != nil {
+		raiseError(w, "addGraph", err)
+		return
 	}
 }
