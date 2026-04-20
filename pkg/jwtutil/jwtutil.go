@@ -11,7 +11,8 @@ import (
 )
 
 type UserClaims struct {
-	UserID uuid.UUID `json:"user_id"`
+	UserID   uuid.UUID `json:"user_id"`
+	Username string    `json:"username"`
 	jwt.RegisteredClaims
 }
 
@@ -33,9 +34,10 @@ func ValidateToken(tokenStr string) (*UserClaims, error) {
 	return nil, errors.New("invalid token claims")
 }
 
-func GenerateToken(userID uuid.UUID, duration time.Duration) (string, error) {
+func GenerateToken(userID uuid.UUID, username string, duration time.Duration) (string, error) {
 	claims := UserClaims{
-		UserID: userID,
+        UserID: userID,
+        Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

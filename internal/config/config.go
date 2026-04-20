@@ -1,18 +1,14 @@
 package config
 
 import (
-	"database/sql"
 	"log"
 	"os"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
 	Port      string
-	DB        *sql.DB
-	Mocker    sqlmock.Sqlmock
 	JWTSecret string
 }
 
@@ -21,14 +17,8 @@ func Load() *Config {
 	if err != nil {
 		log.Println(err)
 	}
-	db, mocker, err := sqlmock.New()
-	if err != nil {
-		log.Fatal(err)
-	}
 	return &Config{
 		Port:      getEnv("PORT", "9191"),
-		DB:        db,
-		Mocker:    mocker,
 		JWTSecret: getEnv("JWT_SECRET", ""),
 	}
 }
