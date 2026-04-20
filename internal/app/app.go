@@ -2,75 +2,115 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
-
-	"github.com/AI-Hackathon-2026/Clients-Service/internal/database"
+	"github.com/AI-Hackathon-2026/Clients-Service/internal/config"
+	"github.com/AI-Hackathon-2026/Clients-Service/internal/repository"
 	"github.com/AI-Hackathon-2026/Clients-Service/internal/service"
 	"github.com/AI-Hackathon-2026/Clients-Service/internal/transport"
 )
 
 const (
-    shutdownTimeout = 10
+	shutdownTimeout  = 10
+	resetTickerHours = 1
 )
 
 type App struct {
-    Addr string
-    db *sql.DB
-    mock sqlmock.Sqlmock
+	cfg *config.Config
 }
 
-func NewApp(adr string, db *sql.DB, mock sqlmock.Sqlmock) *App {
-    return &App{
-        Addr: adr,
-        db: db,
-        mock: mock,
-    }
+func NewApp(cfg *config.Config) *App {
+	return &App{
+		cfg: cfg,
+	}
 }
 
 func (a *App) Run() {
-    router := http.NewServeMux()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-    mocker := database.NewMocker(a.mock)
-    repository := database.NewRepository(a.db, mocker)
-    service := service.NewService(repository)
-    handler := transport.NewHandler(service)
+	db := repository.NewFakeDB()
+	profileRepo := repository.NewProfileRepository(db)
+	authRepo := repository.NewAuthRepository(db)
+	streakRepo := repository.NewStreakRepository(db)
 
-    handler.RegisterRoutes(router)
+	streakService := service.NewStreakService(streakRepo, logger)
+	profileService := service.NewProfileService(profileRepo, streakService)
+	authService := service.NewAuthService(authRepo, logger)
 
-    server := &http.Server{
-        Addr: a.Addr,
-        Handler: transport.LogRequest(router),
-    }
+	mainRouter := http.NewServeMux()
 
-    go func() {
-        log.Printf("Server started on port %s", a.Addr)
-        err := server.ListenAndServe()
-        if err != nil  && !errors.Is(err, http.ErrServerClosed) {
-            log.Println("Error during server starting:", err)
-        }
-    }()
+	h := transport.NewHandler(profileService, authService, logger)
 
-    quit := make(chan os.Signal, 1)
-    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-    <-quit
+	h.RegisterPublicRoutes(mainRouter)
 
-    log.Println("Server is shutting down...")
+	protectedMux := http.NewServeMux()
+	h.RegisterProtectedRoutes(protectedMux)
 
-    ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-    defer cancel()
+	mainRouter.Handle("/", transport.AuthMiddleware(protectedMux))
 
-    err := server.Shutdown(ctx)
-    if err != nil {
-        log.Printf("Error during server shutting down %v.\n", err)
-    }
+	finalHandler := transport.LogRequest(logger, mainRouter)
 
-    log.Println("Server was shut down")
+	server := &http.Server{
+		Addr:     ":" + a.cfg.Port,
+		Handler:  finalHandler,
+		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
+	}
+
+	go func() {
+		logger.Info("Server started", slog.String("addr", a.cfg.Port))
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("Server startup failed", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	resetCtx, resetCancel := context.WithCancel(context.Background())
+	go runStreakResetScheduler(resetCtx, logger, streakService)
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logger.Info("Server is shutting down...")
+	resetCancel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Error("Graceful shutdown failed", "error", err)
+	}
+
+	logger.Info("Server stopped")
+}
+
+func runStreakResetScheduler(ctx context.Context, logger *slog.Logger, streakService service.StreakService) {
+	ticker := time.NewTicker(resetTickerHours * time.Hour)
+	defer ticker.Stop()
+
+	run := func() {
+		updated, err := streakService.ResetExpired(ctx)
+		if err != nil {
+			logger.Error("streak reset job failed", "error", err)
+			return
+		}
+		logger.Info("streak reset job done", "updated_users", updated)
+	}
+
+	run()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			run()
+		}
+	}
 }
